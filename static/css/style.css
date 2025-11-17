@@ -130,18 +130,25 @@ label {
     overflow-y: hidden;        /* pas de scroll vertical */
     white-space: nowrap;       /* empêche le wrapping des enfants */
     scroll-behavior: smooth;   /* scroll fluide */
-    padding-bottom: 50px;
+    padding-bottom: 40px;
 }
 
 .fretboard {
-    display: inline-flex;      /* garde les strings sur une seule ligne horizontale */
-    flex-direction: column;
+    display: flex;               /* use flex (not inline-flex) */
+    flex-direction: column;      /* strings stacked vertically */
     background-color: #3b301e;
-    width: auto;
-    min-width: 1500px;
-    max-width: 3000px;
+    width: max-content;                 /* fills screen width */
+    max-width: none;            /* never wider than viewport */
     height: calc(var(--fretboard-height) * 1px);
     margin-top: 50px;
+    overflow-x: auto;            /* allow horizontal scrolling if needed */
+    touch-action: none;          /* prevent browser scroll while touching frets */
+}
+
+
+
+.fretboard, .note-fret, .half-left, .half-right {
+    touch-action: none;
 }
 
 /* Chaib → all strings same thickness */
