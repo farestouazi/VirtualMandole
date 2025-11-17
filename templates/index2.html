@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mandole Simulator — HTML Neck</title>
+<style>
+body {
+    margin:0;
+    background:#1a0f0a;
+    font-family:"Scheherazade New", serif;
+    color:#f3e3c9;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+}
+
+h1 {
+    margin:20px 0;
+    font-size:28px;
+    text-align:center;
+    color:#f7d9a8;
+}
+
+.mandole-neck {
+    display:flex;
+    overflow-x:auto;
+    padding:10px;
+    width:700px;
+    border:2px solid #aaa;
+    border-radius:10px;
+    background:linear-gradient(to right, #a67c52, #8c5a2e);
+}
+
+.fret {
+    display:flex;
+    flex-direction:column;
+    border-left:1px solid #ccc;
+    min-width:60px;
+    position:relative;
+}
+
+.split-half {
+    flex:1;
+    border-bottom:1px solid rgba(255,255,255,0.3);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    cursor:pointer;
+}
+
+.note {
+    font-size:12px;
+    text-align:center;
+}
+
+.course-pair {
+    display:flex;
+    flex-direction:row;
+    justify-content:center;
+    margin:1px 0;
+}
+
+.vibrate {
+    animation: vibrate 0.2s ease-in-out;
+}
+
+@keyframes vibrate {
+    0% { transform: translateY(0); }
+    25% { transform: translateY(-2px); }
+    50% { transform: translateY(2px); }
+    75% { transform: translateY(-2px); }
+    100% { transform: translateY(0); }
+}
+</style>
+</head>
+<body>
+<h1>Mandole Simulator — 5 Courses Doubled</h1>
+<div class="mandole-neck" id="mandole">
+    <!-- Open fret -->
+    <div class="fret" data-fret="0">
+        <div class="course-pair"><span class="note">E2</span><span class="note">E2</span></div>
+        <div class="course-pair"><span class="note">A2</span><span class="note">A2</span></div>
+        <div class="course-pair"><span class="note">D3</span><span class="note">D3</span></div>
+        <div class="course-pair"><span class="note">G3</span><span class="note">G3</span></div>
+        <div class="course-pair"><span class="note">C4</span><span class="note">C4</span></div>
+    </div>
+    <!-- Fret 1 -->
+    <div class="fret" data-fret="1">
+        <div class="course-pair"><span class="note">F2</span><span class="note">F2</span></div>
+        <div class="course-pair"><span class="note">A♯2</span><span class="note">A♯2</span></div>
+        <div class="course-pair"><span class="note">D♯3</span><span class="note">D♯3</span></div>
+        <div class="course-pair"><span class="note">G♯3</span><span class="note">G♯3</span></div>
+        <div class="course-pair"><span class="note">C♯4</span><span class="note">C♯4</span></div>
+    </div>
+    <!-- Fret 2 split -->
+    <div class="fret" data-fret="2">
+        <div class="split-half" data-half="L">
+            <div class="course-pair"><span class="note">F¼2</span><span class="note">F¼2</span></div>
+            <div class="course-pair"><span class="note">B¼2</span><span class="note">B¼2</span></div>
+            <div class="course-pair"><span class="note">E¼3</span><span class="note">E¼3</span></div>
+            <div class="course-pair"><span class="note">A¼3</span><span class="note">A¼3</span></div>
+            <div class="course-pair"><span class="note">D¼4</span><span class="note">D¼4</span></div>
+        </div>
+        <div class="split-half" data-half="R">
+            <div class="course-pair"><span class="note">F2</span><span class="note">F2</span></div>
+            <div class="course-pair"><span class="note">B2</span><span class="note">B2</span></div>
+            <div class="course-pair"><span class="note">E3</span><span class="note">E3</span></div>
+            <div class="course-pair"><span class="note">A3</span><span class="note">A3</span></div>
+            <div class="course-pair"><span class="note">D4</span><span class="note">D4</span></div>
+        </div>
+    </div>
+    <!-- Fret 3 -->
+    <div class="fret" data-fret="3">
+        <div class="course-pair"><span class="note">G2</span><span class="note">G2</span></div>
+        <div class="course-pair"><span class="note">C3</span><span class="note">C3</span></div>
+        <div class="course-pair"><span class="note">F3</span><span class="note">F3</span></div>
+        <div class="course-pair"><span class="note">A♯3</span><span class="note">A♯3</span></div>
+        <div class="course-pair"><span class="note">D4</span><span class="note">D4</span></div>
+    </div>
+    <!-- Fret 4 split -->
+    <div class="fret" data-fret="4">
+        <div class="split-half" data-half="L">
+            <div class="course-pair"><span class="note">G¼2</span><span class="note">G¼2</span></div>
+            <div class="course-pair"><span class="note">C¼3</span><span class="note">C¼3</span></div>
+            <div class="course-pair"><span class="note">F¼3</span><span class="note">F¼3</span></div>
+            <div class="course-pair"><span class="note">B¼3</span><span class="note">B¼3</span></div>
+            <div class="course-pair"><span class="note">E¼4</span><span class="note">E¼4</span></div>
+        </div>
+        <div class="split-half" data-half="R">
+            <div class="course-pair"><span class="note">G2</span><span class="note">G2</span></div>
+            <div class="course-pair"><span class="note">C3</span><span class="note">C3</span></div>
+            <div class="course-pair"><span class="note">F3</span><span class="note">F3</span></div>
+            <div class="course-pair"><span class="note">B3</span><span class="note">B3</span></div>
+            <div class="course-pair"><span class="note">E4</span><span class="note">E4</span></div>
+        </div>
+    </div>
+    <!-- Fret 5 à 12 simple -->
+    <!-- Répéter le même modèle avec des notes correctes -->
+</div>
+<script>
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+document.querySelectorAll('.split-half, .course-pair').forEach(el=>{
+    el.addEventListener('click', e=>{
+        el.classList.add('vibrate');
+        setTimeout(()=>el.classList.remove('vibrate'),200);
+        // jouer le son correspondant (à implémenter)
+    });
+});
+</script>
+</body>
+</html>

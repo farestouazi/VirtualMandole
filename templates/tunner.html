@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap"
+    rel="stylesheet">
+  <title>Accorder - VirtualMandole</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.js"></script>
+  <link rel="stylesheet" href="../static/css/style.css">
+  <style>
+    canvas {
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+
+<body class="flex justify-center items-center min-h-screen bg-gray-200">
+  <header class="header">
+    <a href="/">
+      <div class="logo">
+        <div class="logo-title-light">Virtual</div>
+        <div class="logo-title-gros">Mandole</div>
+        <div class="logo-sub">Accorder, jouer et apprendre</div>
+      </div>
+    </a>
+    <nav id="nav-menu" class="hidden">
+      <ul>
+        <li><a href="/play">Jouer</a></li>
+        <li><a href="#">Apprendre</a></li>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <div id="app"></div>
+
+    <script>
+      // --- Full JavaScript Guitar Tuner (Vanilla) ---
+      // (Simplified version of the React tuner, without React)
+
+      const app = document.getElementById('app');
+      app.innerHTML = `
+      <div class='max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow'>
+        <h1 class='text-3xl font-bold mb-4'>Accordeur de Guitare</h1>
+        <button id='startBtn' class='px-4 py-2 bg-blue-600 text-white rounded-xl'>Démarrer</button>
+        <button id='stopBtn' class='px-4 py-2 bg-red-500 text-white rounded-xl ml-2'>Arrêter</button>
+
+        <div class='mt-4 text-xl'>Note détectée : <span id='note'>—</span></div>
+        <div class='text-sm text-gray-500'>Fréquence : <span id='freq'>—</span></div>
+        <div class='text-sm text-gray-500'>Cents : <span id='cents'>—</span></div>
+
+        <canvas id='wave' width='600' height='120' class='mt-4 w-full'></canvas>
+      </div>
+    `;
+
+      let audioCtx, analyser, dataArray, mediaStream;
+
+      function startListening() {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          mediaStream = stream;
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = 2048;
+
+          const source = audioCtx.createMediaStreamSource(stream);
+          source.connect(analyser);
+          dataArray = new Float32Array(analyser.fftSize);
+
+          update();
+        });
+      }
+
+      function stopListening() {
+        if (mediaStream) mediaStream.getTracks().forEach(t => t.stop());
+        if (audioCtx) audioCtx.close();
+      }
+
+      function autoCorrelate(buffer, sampleRate) {
+        let SIZE = buffer.length;
+        let rms = 0;
+        for (let i = 0; i < SIZE; i++) rms += buffer[i] * buffer[i];
+        rms = Math.sqrt(rms / SIZE);
+        if (rms < 0.01) return -1;
+
+        let r1 = 0, r2 = SIZE - 1;
+        const thresh = 0.2;
+
+        for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buffer[i]) < thresh) { r1 = i; break; }
+        for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buffer[SIZE - i]) < thresh) { r2 = SIZE - i; break; }
+
+        buffer = buffer.slice(r1, r2);
+        SIZE = buffer.length;
+
+        const c = new Array(SIZE).fill(0);
+        for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] += buffer[j] * buffer[j + i];
+
+        let d = 0;
+        while (c[d] > c[d + 1]) d++;
+
+        let maxval = -1, maxpos = -1;
+        for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+
+        let T0 = maxpos;
+        if (T0 === 0) return -1;
+
+        return sampleRate / T0;
+      }
+
+      function update() {
+        analyser.getFloatTimeDomainData(dataArray);
+
+        const freqValue = autoCorrelate(dataArray, audioCtx.sampleRate);
+
+        if (freqValue !== -1) {
+          document.getElementById('freq').textContent = freqValue.toFixed(2) + ' Hz';
+          const noteData = freqToNote(freqValue);
+          document.getElementById('note').textContent = noteData.note;
+          document.getElementById('cents').textContent = noteData.cents;
+        }
+
+        drawWave();
+        requestAnimationFrame(update);
+      }
+
+      const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+      function freqToNote(freq) {
+        const referenceA = 440;
+        const noteNum = 12 * (Math.log(freq / referenceA) / Math.log(2)) + 69;
+        const rounded = Math.round(noteNum);
+        const index = (rounded + 3) % 12;
+        const octave = Math.floor(rounded / 12) - 1;
+        const cents = Math.floor((noteNum - rounded) * 100);
+        return { note: notes[index] + octave, cents };
+      }
+
+      function drawWave() {
+        const canvas = document.getElementById('wave');
+        const ctx = canvas.getContext('2d');
+        analyser.getFloatTimeDomainData(dataArray);
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+
+        const slice = canvas.width / dataArray.length;
+        let x = 0;
+        for (let i = 0; i < dataArray.length; i++) {
+          const v = dataArray[i] * 0.5 + 0.5;
+          const y = v * canvas.height;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+          x += slice;
+        }
+        ctx.stroke();
+      }
+
+      document.getElementById('startBtn').onclick = startListening;
+      document.getElementById('stopBtn').onclick = stopListening;
+    </script>
+
+    <!-- Guitar Neck Visual -->
+    <style>
+      /* Responsive & visual styles for the neck */
+      .neck {
+        display: flex;
+        gap: 8px;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 12px;
+      }
+
+      .string {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .peg {
+        width: 100%;
+        max-width: 64px;
+        border-radius: 8px;
+        padding: 8px 10px;
+        text-align: center;
+        font-weight: 600;
+      }
+
+      .peg.active {
+        background: linear-gradient(90deg, #60a5fa, #3b82f6);
+        color: white;
+        transform: scale(1.03);
+        box-shadow: 0 6px 18px rgba(59, 130, 246, 0.25);
+      }
+
+      .fretboard {
+        width: 100%;
+        height: 220px;
+        background: linear-gradient(180deg, #5b3a29, #4b2b1f);
+        border-radius: 12px;
+        padding: 12px;
+        box-sizing: border-box;
+        display: flex;
+        gap: 6px;
+      }
+
+      .string-line {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      .fret {
+        width: 100%;
+        height: 12px;
+        margin: 4px 0;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      @media (max-width:640px) {
+        .fretboard {
+          height: 160px;
+        }
+
+        .peg {
+          max-width: 48px;
+          padding: 6px 8px;
+          font-size: 14px
+        }
+      }
+    </style>
+
+    <section class="w-full flex justify-center mt-10">
+      <div class="bg-gray-100 border border-gray-300 shadow-lg rounded-2xl p-6 w-[320px] text-center">
+        <h2 class="text-xl font-semibold mb-4">Guitar Tuner</h2>
+
+        <div class="flex justify-between mt-4">
+          <!-- Left column: high strings -->
+          <div class="flex flex-col gap-3 items-center">
+            <button class="peg" data-index="4">C4</button>
+            <button class="peg" data-index="3">G3</button>
+          </div>
+
+          <!-- Right column: low strings -->
+          <div class="flex flex-col gap-3 items-center">
+            <button class="peg" data-index="2">D3</button>
+            <button class="peg" data-index="1">A2</button>
+            <button class="peg" data-index="0">E2</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // Enhanced neck visuals, touch friendly, and plucked-string sound synthesis
+      const notesForStrings = ["E2", "A2", "D3", "G3", "B3", "E4"]; // low -> high
+      const targetFrequencies = [82.41, 110.00, 146.83, 196.00, 246.94, 329.63];
+      const neckControls = document.getElementById('neckControls');
+      const fretboard = document.getElementById('fretboard');
+
+      let focusedString = null; // index of focused string or null
+
+      // Build pegs (clickable large buttons)
+      function buildNeck() {
+        neckControls.innerHTML = '';
+        for (let i = 0; i < notesForStrings.length; i++) {
+          const btn = document.createElement('button');
+          btn.className = 'peg';
+          btn.setAttribute('role', 'button');
+          btn.setAttribute('aria-pressed', 'false');
+          btn.innerHTML = `<div>${notesForStrings[i]}</div><small class='block text-xs text-gray-600'>${targetFrequencies[i].toFixed(2)} Hz</small>`;
+          btn.dataset.index = i;
+          btn.addEventListener('click', () => { focusString(i); playReference(targetFrequencies[i]); });
+          btn.addEventListener('touchstart', (e) => { e.preventDefault(); focusString(i); playReference(targetFrequencies[i]); }, { passive: false });
+          neckControls.appendChild(btn);
+        }
+        highlightButtons();
+      }
+
+      // Build simple fretboard visual (rows = strings, columns = frets placeholders)
+      function buildFretboard() {
+        fretboard.innerHTML = '';
+        const frets = 12;
+        for (let s = 0; s < notesForStrings.length; s++) {
+          const col = document.createElement('div');
+          col.className = 'string-line';
+          col.style.flex = '1';
+          for (let f = 0; f < frets; f++) {
+            const slot = document.createElement('div');
+            slot.className = 'fret';
+            // add little markers for common fret positions
+            if ([3, 5, 7, 9, 12].includes(f + 1)) {
+              slot.style.background = 'rgba(255,255,255,0.12)';
+            }
+            col.appendChild(slot);
+          }
+          fretboard.appendChild(col);
+        }
+      }
+
+      function highlightButtons() {
+        document.querySelectorAll('.peg').forEach((b, idx) => {
+          if (focusedString === idx) {
+            b.classList.add('active');
+            b.setAttribute('aria-pressed', 'true');
+          } else {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          }
+        });
+      }
+
+      function focusString(i) {
+        focusedString = i;
+        highlightButtons();
+      }
+
+      function autoSelectClosest(freq) {
+        if (focusedString !== null) return focusedString;
+        if (!freq || isNaN(freq)) return null;
+        let best = 0; let bestDiff = Infinity;
+        targetFrequencies.forEach((f, idx) => {
+          const diff = Math.abs(f - freq);
+          if (diff < bestDiff) { bestDiff = diff; best = idx; }
+        });
+        focusedString = best;
+        highlightButtons();
+        return best;
+      }
+
+      // Hook into existing update() flow that reads audio and calls autoCorrelate
+      // We override update further above; ensure we still call autoSelectClosest there.
+
+      // --- Simple plucked-string synthesis (Karplus-Strong-like) ---
+      const audioCtxLocal = new (window.AudioContext || window.webkitAudioContext)();
+      function playStringPluck(freq, length = 2.0) {
+        // Karplus-Strong simplified with noise burst in bufferSource -> lowpass feedback
+        const sampleRate = audioCtxLocal.sampleRate;
+        const N = Math.floor(sampleRate / freq);
+        const buffer = audioCtxLocal.createBuffer(1, N, sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < N; i++) data[i] = (Math.random() * 2 - 1) * 0.5; // noise burst
+
+        const src = audioCtxLocal.createBufferSource();
+        src.buffer = buffer;
+
+        const loop = audioCtxLocal.createScriptProcessor(0, 1, 1);
+        // Use a simple feedback delay + lowpass to simulate decay
+        const delay = audioCtxLocal.createDelay();
+        delay.delayTime.value = 1 / freq;
+        const lp = audioCtxLocal.createBiquadFilter();
+        lp.type = 'lowpass'; lp.frequency.value = Math.max(1000, freq * 3);
+        const gain = audioCtxLocal.createGain(); gain.gain.value = 0.9;
+
+        src.connect(delay);
+        delay.connect(lp);
+        lp.connect(gain);
+        gain.connect(delay);
+
+        const outGain = audioCtxLocal.createGain(); outGain.gain.value = 0.0001;
+        gain.connect(outGain);
+        outGain.connect(audioCtxLocal.destination);
+
+        // Smooth attack
+        outGain.gain.linearRampToValueAtTime(0.25, audioCtxLocal.currentTime + 0.01);
+        outGain.gain.exponentialRampToValueAtTime(0.0001, audioCtxLocal.currentTime + length);
+
+        src.start();
+        // stop and cleanup after length + small buffer
+        setTimeout(() => { try { src.stop(); } catch (e) { } }, (length + 0.1) * 1000);
+      }
+
+      // Play a clean sine reference tone (used when clicking pegs as well)
+      function playReference(freqToPlay = 440, duration = 0.6) {
+        if (audioCtxLocal.state === 'suspended') audioCtxLocal.resume();
+        const o = audioCtxLocal.createOscillator();
+        const g = audioCtxLocal.createGain();
+        o.type = 'sine'; o.frequency.value = freqToPlay;
+        g.gain.value = 0.0001;
+        o.connect(g); g.connect(audioCtxLocal.destination);
+        g.gain.linearRampToValueAtTime(0.18, audioCtxLocal.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.00001, audioCtxLocal.currentTime + duration);
+        o.start();
+        o.stop(audioCtxLocal.currentTime + duration + 0.02);
+      }
+
+      // Improve mobile interactions: large touch targets already, ensure audio context resumed on user gesture
+      function resumeAudioIfNeeded() {
+        try { if (audioCtxLocal.state === 'suspended') audioCtxLocal.resume(); } catch (e) { }
+      }
+      document.addEventListener('touchstart', resumeAudioIfNeeded, { passive: true });
+      document.addEventListener('click', resumeAudioIfNeeded);
+
+      // When the user clicks a peg: play a pluck sound + highlight
+      neckControls.addEventListener('click', (e) => {
+        const btn = e.target.closest('.peg');
+        if (!btn) return;
+        const idx = Number(btn.dataset.index);
+        // pluck the string for immediate audio feedback
+        playStringPluck(targetFrequencies[idx]);
+      });
+
+      // Initialize visuals
+      buildNeck();
+      buildFretboard();
+
+      // Connect this autoSelectClosest into the main update loop created earlier.
+      // The update function defined previously already calls autoSelectClosest(freqValue) before updating UI.
+      // Here we only ensure that when auto-selection happens we also flash a brief pluck animation on the fretboard.
+      function flashFretboardString(idx) {
+        if (idx === null || idx === undefined) return;
+        const stringCols = fretboard.children;
+        if (!stringCols[idx]) return;
+        stringCols[idx].style.transform = 'scale(1.02)';
+        stringCols[idx].style.transition = 'transform 220ms ease-out';
+        setTimeout(() => { stringCols[idx].style.transform = ''; }, 220);
+      }
+
+      // Patch the global update used earlier to also flash string when selected automatically
+      const originalUpdate = window.update;
+      window.update = function () {
+        if (typeof originalUpdate === 'function') originalUpdate();
+        // if a focusedString was set by autoSelectClosest in the original update, animate it
+        if (focusedString !== null) flashFretboardString(focusedString);
+      };
+
+      // Also allow double-tap on peg to play plucked tone (mobile)
+      document.querySelectorAll('.peg').forEach(p => {
+        let lastTap = 0;
+        p.addEventListener('touchend', (ev) => {
+          const now = Date.now();
+          if (now - lastTap < 300) {
+            const idx = Number(p.dataset.index);
+            playStringPluck(targetFrequencies[idx]);
+          }
+          lastTap = now;
+        });
+      });
+
+    </script>
+  </main>
+  <footer>
+    <p>&copy; 2025 VirtualMandole. Tous droits réservés.</p>
+    <p>Conçu avec ❤️ pour faciliter votre expérience.</p>
+  </footer>
+</body>
+
+</html>

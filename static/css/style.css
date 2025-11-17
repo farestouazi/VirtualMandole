@@ -1,0 +1,405 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Lato', 'Segoe UI', sans-serif;
+    line-height: 1.6;
+    background-color: #161717;
+    color: white;
+}
+
+header {
+    width: 100%;
+    background-color: rgba(124, 77, 33, 0.966);
+    transition: background-color 0.3s, top 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 3rem;
+}
+
+footer {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    text-align: center;
+    padding: 20px;
+    background-color: #222;
+    color: #ccc;
+    font-size: 0.9em;
+}
+
+
+.logo {
+    display: flex;
+    flex-direction: row;
+    gap: 0px;
+    align-items: baseline;
+    transition-duration: 200ms;
+    font-size: 50px;
+    color: #fff;
+}
+
+.logo .logo-title-gros {
+    font-weight: bold;
+}
+
+.logo .logo-title-light {
+    font-weight: lighter;
+}
+
+.logo .logo-sub {
+    margin-left: 12px;
+    font-weight: 300;
+    font-size: 22px;
+}
+
+
+
+
+
+
+:root {
+    --fretboard-height: 250;
+    --number-of-strings: 5;
+    --string-height: 10;
+    --half-string-height: calc(var(--string-height) / 2);
+    --string-top-position: calc(var(--fretboard-height) / var(--number-of-strings) / 2 - var(--half-string-height));
+    --double-fretmark-position-1: calc(var(--fretboard-height) * 0.25);
+    --double-fretmark-position-2: calc(var(--fretboard-height) * 0.75);
+    --noteDotOpacity: 0;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+ul {
+    list-style: none;
+}
+
+nav ul {
+    display: flex;
+    gap: 25px;
+}
+
+nav a {
+    font-size: 20px;
+    color: white;
+    font-weight: bold;
+    transition: color 0.3s;
+    margin-left: 10px;
+}
+
+nav a:hover {
+    color: #ffdd57;
+}
+
+
+
+
+
+.settings {
+    display: flex;
+    color: #fff;
+    padding: 20px;
+    border-bottom: 1px solid #444;
+    background: #282828;
+}
+
+.accidental-selector {
+    margin-left: 20px;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    opacity: 1;
+}
+
+label {
+    margin: 0 10px;
+}
+
+.fretboard-container {
+    width: 100%;               /* largeur visible sur la page */
+    overflow-x: auto;          /* scroll horizontal si trop large */
+    overflow-y: hidden;        /* pas de scroll vertical */
+    white-space: nowrap;       /* empêche le wrapping des enfants */
+    scroll-behavior: smooth;   /* scroll fluide */
+    padding-bottom: 50px;
+}
+
+.fretboard {
+    display: inline-flex;      /* garde les strings sur une seule ligne horizontale */
+    flex-direction: column;
+    background-color: #3b301e;
+    width: auto;
+    min-width: 1500px;
+    max-width: 3000px;
+    height: calc(var(--fretboard-height) * 1px);
+    margin-top: 50px;
+}
+
+/* Chaib → all strings same thickness */
+.fretboard.uniform-strings .string:before {
+    height: 2px !important;
+    background: linear-gradient(#eee, #999) !important;
+}
+
+.fretboard.eight-strings .string:before,
+.fretboard.eight-strings .string:after {
+    background: linear-gradient(#ffae00c4, #e4a700);
+}
+
+.fretboard.eight-strings .string:nth-child(1):before,
+.fretboard.eight-strings .string:nth-child(1):after {
+    height: 3px;
+}
+
+.fretboard.eight-strings .string:nth-child(2):before,
+.fretboard.eight-strings .string:nth-child(2):before {
+    height: 4px;
+}
+
+.fretboard.eight-strings .string:nth-child(3):before,
+.fretboard.eight-strings .string:nth-child(3):before {
+    height: 5px;
+}
+
+.fretboard.eight-strings .string:nth-child(4):before,
+.fretboard.eight-strings .string:nth-child(4):before {
+    height: 6px;
+}
+
+
+
+
+.string {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    position: relative;
+}
+
+
+.string:before {
+    content: '';
+    width: 100%;
+    height: calc(var(--string-height) * 1px);
+    background: linear-gradient(#ffae00c4, #e4a700);
+    box-shadow: 76px 3px 10px #806233;
+    z-index: 1;
+    position: absolute;
+    top: calc(var(--string-top-position) * 1px);
+}
+
+/* Thicker strings for lower strings */
+.string:nth-child(1):before {
+    height: 2px;
+    background: linear-gradient(#eee, #999);
+}
+
+/* 1st string (highest) thin */
+.string:nth-child(2):before {
+    height: 3px;
+}
+
+.string:nth-child(3):before {
+    height: 4px;
+}
+
+.string:nth-child(4):before {
+    height: 5px;
+}
+
+.string:nth-child(5):before {
+    height: 6px;
+}
+
+.string:after {
+    content: '';
+    width: 100%;
+    position: absolute;
+    background: linear-gradient(#ffae00c4, #e4a700);
+    z-index: 1;
+    top: calc(var(--string-top-position) * 1px + 11px);
+}
+
+.string:nth-child(1):after {
+    height: 2px;
+    background: linear-gradient(#eee, #999);
+}
+
+.string:nth-child(2):after {
+    height: 3px;
+}
+
+.string:nth-child(3):after {
+    height: 4px;
+}
+
+.string:nth-child(4):after {
+    height: 5px;
+}
+
+.string:nth-child(5):after {
+    height: 6px;
+}
+
+
+.fretboard-container.eight-string .string:nth-child(1),
+.fretboard-container.eight-string .string:nth-child(2),
+.fretboard-container.eight-string .string:nth-child(3),
+.fretboard-container.eight-string .string:nth-child(4) {
+    background: (#ffae00c4, #e4a700);
+    height: 4px;
+}
+
+.fretboard-container.mandole-chaabi .note-fret.split {
+    display: none;
+}
+
+
+
+.note-fret {
+    min-width: 150px;
+    display: flex;
+    flex: 1;
+    border-right: 10px solid;
+    border-image: linear-gradient(to left, #777, #bbb, #777) 1 100%;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.note-fret:first-child {
+    background: #161717;
+    min-width: 100px;
+    border-right: 28px solid;
+    flex-grow: 0;
+    flex-shrink: 0;
+    border-image: linear-gradient(to left, #bbb, #fff, #bbb) 1 100%;
+}
+
+.note-fret:before {
+    content: attr(data-note);
+    width: 33px;
+    height: 33px;
+    border-radius: 50%;
+    line-height: 30px;
+    text-align: center;
+    background: #a37800;
+    z-index: 2;
+    color: #eee;
+    opacity: var(--noteDotOpacity);
+}
+
+
+.note-fret.split::before {
+    display: none;
+}
+
+.note-fret.split::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    border-right: 10px solid;
+    border-image: linear-gradient(to left, #777, #bbb, #777) 1 100%;
+    transform: translateX(-50%);
+}
+
+
+
+
+
+
+
+
+
+.note-fret.split {
+    position: relative;
+}
+
+.note-fret.split .half-left,
+.note-fret.split .half-right {
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    z-index: 20;
+    /* AU-DESSUS de la case */
+}
+
+/* gauche */
+.note-fret.split .half-left {
+    left: 0;
+}
+
+.note-fret.split .half-right {
+    right: 0;
+}
+
+.half-left::before,
+.half-right::before {
+    content: attr(data-note);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #a37800;
+    color: white;
+    width: 33px;
+    height: 33px;
+    border-radius: 50%;
+    line-height: 30px;
+    text-align: center;
+    opacity: var(--noteDotOpacity, 0);
+}
+
+
+
+
+
+
+
+
+
+.single-fretmark:after {
+    content: "";
+    position: absolute;
+    height: 27px;
+    width: 27px;
+    border-radius: 50%;
+    background: #d4c3a5;
+}
+
+.single-fretmark:after {
+    top: calc(var(--fretboard-height) / 2 * 1px);
+    transform: translate(0, -44%);
+}
+
+
+.note-name-section {
+    width: 100%;
+    color: #fff;
+    font-weight: 100;
+    font-size: 2.5em;
+    display: flex;
+    justify-content: center;
+}
+
+.note-name-section span {
+    padding: 10px;
+    cursor: pointer;
+}
+
+.note-name-section span:hover {
+    color: #a37800;
+}

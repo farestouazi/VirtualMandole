@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="../static/css/style.css">
+  <title>Jouer - VirtualMandole</title>
+</head>
+
+<body>
+
+  <header class="header">
+    <a href="/">
+      <div class="logo">
+        <div class="logo-title-light">Virtual</div>
+        <div class="logo-title-gros">Mandole</div>
+        <div class="logo-sub">Accorder, jouer et apprendre</div>
+      </div>
+    </a>
+    <nav id="nav-menu" class="hidden">
+      <ul>
+        <li><a href="/tunner">Accorder</a></li>
+        <li><a href="#">Apprendre</a></li>
+        <li><a href="#">À propos</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+
+  <main>
+    <div class="settings">
+      <label for="instrument-selector">Instrument choisi</label>
+      <select name="instrument-selector" id="instrument-selector"></select>
+
+      <div class="accidental-selector">
+        <input type="radio" class="acc-select" id="flats" name="accidentals" value="flats" checked>
+        <label for="flats">♭</label>
+        <input type="radio" class="acc-select" id="sharps" name="accidentals" value="sharps">
+        <label for="flats">♯</label>
+      </div>
+      <div style="margin: 10px; display: flex; align-items: center; gap: 10px;">
+        <button id="transposeDown">-</button>
+        <input type="number" id="transposeInput" value="0" step="1" style="width: 60px;">
+        <button id="transposeUp">+</button>
+        <span>Transpose (semitones)</span>
+      </div>
+
+
+      <label for="show-all-notes">Afficher toutes les notes</label>
+      <input type="checkbox" id="show-all-notes">
+
+    </div>
+
+
+
+    <div class="fretboard-container">
+      <div class="fretboard">
+        <div class="string">
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret single-fretmark"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret single-fretmark"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret single-fretmark"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret single-fretmark"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret single-fretmark"></div>
+        </div>
+        <div class="string">
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+        </div>
+        <div class="string">
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+        </div>
+        <div class="string">
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+        </div>
+        <div class="string">
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret split"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+          <div class="note-fret"></div>
+        </div>
+      </div>
+    </div>
+    <div class="note-name-section">
+
+    </div>
+
+  </main>
+
+  <footer>
+    <p>&copy; 2025 VirtualMandole. Tous droits réservés.</p>
+    <p>Conçu avec ❤️ pour faciliter votre expérience.</p>
+  </footer>
+
+  <script src="../static/js/app-new.js"></script>
+</body>
+
+</html>
