@@ -8,6 +8,16 @@
     const notesFlat = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
     const notesSharp = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const activeOscillators = new Map();
+
+    document.addEventListener('touchstart', () => {
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }, { once: true });
+
+
     const instruments = {
         "Mandole Simple (10 cordes)": {
             strings: 5,
@@ -77,7 +87,6 @@
                 const fret = document.createElement("div");
                 fret.className = "note-fret";
 
-                // Split frets
                 if (config.splitFrets.includes(f)) {
                     fret.classList.add("split");
 
@@ -91,7 +100,6 @@
                     fret.appendChild(halfRight);
                 }
 
-                // Fret markers (same positions you used)
                 if ([3, 5, 7, 9, 12].includes(f) && s === 0) {
                     fret.classList.add("single-fretmark");
                 }
@@ -127,14 +135,12 @@
     function noteToFrequency(note) {
         const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-        // Extract base note + octave (supports _k)
         const match = note.match(/^([A-G][b#]?)(?:_k)?(\d)$/);
         if (!match) return 440;
 
         let [, baseNote, octave] = match;
         octave = parseInt(octave);
 
-        // Convert flats to sharps
         const flatToSharp = {
             "Db": "C#",
             "Eb": "D#",
@@ -146,31 +152,69 @@
 
         const noteIndex = notes.indexOf(baseNote);
         if (noteIndex === -1) return 440;
-
-        // Calculate final frequency
         const a4 = 440;
-        const midi = noteIndex + (octave + 1) * 12; // proper midi
+        const midi = noteIndex + (octave + 1) * 12;
         const midiA4 = 69;
 
         return a4 * Math.pow(2, (midi - midiA4) / 12);
     }
 
 
-    function playNote(noteElement) {
-        let midi = parseFloat(noteElement.dataset.midi);
+    function playNote(target) {
+        if (!target || !target.dataset.note) return;
 
-        midi += transpose;
+        const noteRaw = target.dataset.note;
+        const stringEl = target.closest('.string');
+        const fretEl = target.closest('.note-fret');
+        const fretIndex = Array.from(stringEl.children).indexOf(fretEl);
+        const stringIndex = parseInt(stringEl.dataset.stringIndex);
+        const key = noteRaw + '_' + stringIndex + '_' + fretIndex;
 
-        const freq = 440 * Math.pow(2, (midi - 69) / 12);
+        if (activeOscillators.has(key)) {
+            const prevOsc = activeOscillators.get(key);
+            prevOsc.stop();
+            activeOscillators.delete(key);
+        }
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        osc.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
+        let note = noteRaw;
+        let freq;
+
+        if (note.includes('_k')) {
+            const prevFret = stringEl.querySelectorAll('.note-fret')[fretIndex - 1];
+            if (prevFret) {
+                const prevNote = applyTranspose(prevFret.dataset.note.replace('_k', ''));
+                const prevFreq = noteToFrequency(prevNote);
+                freq = prevFreq + prevFreq * 0.02;
+            } else {
+                freq = noteToFrequency(applyTranspose(note.replace('_k', '')));
+            }
+        } else {
+            note = applyTranspose(note);
+            freq = noteToFrequency(note);
+        }
+
+        const oscillator = audioCtx.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        oscillator.connect(audioCtx.destination);
+        oscillator.start();
+
+        activeOscillators.set(key, oscillator);
+
+        setTimeout(() => {
+            oscillator.stop();
+            activeOscillators.delete(key);
+        }, 300);
+
+        target.style.setProperty('--noteDotOpacity', 1);
+        setTimeout(() => {
+            target.style.setProperty('--noteDotOpacity', 0);
+        }, 300);
     }
+
+
+
+
 
 
 
@@ -208,7 +252,7 @@
             const frets = string.querySelectorAll('.note-fret');
 
             frets.forEach((fret, fIndex) => {
-                const midi = openMidi + fIndex; // each fret adds 1 semitone
+                const midi = openMidi + fIndex;
                 const noteName = midiToNote(midi);
 
                 fret.dataset.midi = midi;
@@ -218,7 +262,7 @@
                     const left = fret.querySelector(".half-left");
                     const right = fret.querySelector(".half-right");
 
-                    left.dataset.midi = midi - 0.6; // special note (quarter-tone lower)
+                    left.dataset.midi = midi - 0.6;
                     left.dataset.note = noteName + "_k";
 
                     right.dataset.midi = midi;
@@ -251,7 +295,7 @@
     function noteToMidi(note) {
         const match = note.match(/^([A-G][b#]?)(?:_k)?(\d)$/);
 
-        if (!match) return 60; // default C4
+        if (!match) return 60;
 
         const [, n, octave] = match;
         const index = NOTES.indexOf(n);
@@ -269,7 +313,7 @@
 
     function applyTranspose(originalNote) {
         const midi = noteToMidi(originalNote);
-        const transposedMidi = midi - transpose;
+        const transposedMidi = midi + transpose;
         return midiToNote(transposedMidi);
     }
 
@@ -303,7 +347,6 @@
         }
     });
 
-    // Mouse
     fretboard.addEventListener('mousedown', e => {
         const target = e.target.closest('.note-fret, .half-left, .half-right');
         if (!target) return;
@@ -371,9 +414,9 @@
     instrumentSelector.addEventListener("change", e => {
         selectedInstrument = e.target.value;
 
-        buildFretboard();      // regenerate DOM
-        updateStringStyle();   // adjust string thickness
-        updateNotes();         // reapply notes based on tuning
+        buildFretboard();
+        updateStringStyle();
+        updateNotes();
     });
 
 
@@ -402,7 +445,6 @@
     createSplitFrets();
     updateNotes();
 
-    // --- KEYBOARD SUPPORT ---
     const keyboardMap = {
 
         // --- STRING 0 ---
@@ -448,10 +490,9 @@
 
     const activeKeys = new Set();
 
-    // KEY LISTENER
     document.addEventListener("keydown", e => {
         const key = e.key;
-        if (!keyboardMap[key] || activeKeys.has(key)) return; // ignore si déjà enfoncée
+        if (!keyboardMap[key] || activeKeys.has(key)) return;
 
         activeKeys.add(key);
 
@@ -480,7 +521,7 @@
         const key = e.key;
         if (!keyboardMap[key]) return;
 
-        activeKeys.delete(key); // permet de rejouer la note après relâchement
+        activeKeys.delete(key);
 
         const { string, fret, half } = keyboardMap[key];
         const stringEl = document.querySelectorAll(".string")[string];
@@ -493,7 +534,7 @@
         if (half === "left") target = fretEl.querySelector(".half-left");
         if (half === "right") target = fretEl.querySelector(".half-right");
 
-        target.style.setProperty('--noteDotOpacity', 0); // enlève le highlight
+        target.style.setProperty('--noteDotOpacity', 0);
     });
 
 
