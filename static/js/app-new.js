@@ -303,72 +303,58 @@
         }
     });
 
+    // Mouse
     fretboard.addEventListener('mousedown', e => {
-        if (e.target.classList.contains('half-left') ||
-            e.target.classList.contains('half-right') ||
-            e.target.classList.contains('note-fret')) {
-
-            const targetFret = e.target.classList.contains('note-fret') ? e.target : e.target.closest('.note-fret');
-            const stringEl = targetFret.closest('.string');
-            const stringIndex = parseInt(stringEl.dataset.stringIndex);
-            const fretIndex = Array.from(stringEl.children).indexOf(targetFret);
-
-            const note = e.target.dataset.note;
-            if (note) playNote(target);
-
-            e.target.style.setProperty('--noteDotOpacity', 1);
-        }
+        const target = e.target.closest('.note-fret, .half-left, .half-right');
+        if (!target) return;
+        playNote(target);
+        target.style.setProperty('--noteDotOpacity', 1);
     });
 
     fretboard.addEventListener('mouseup', e => {
-        if (e.target.classList.contains('half-left') ||
-            e.target.classList.contains('half-right') ||
-            e.target.classList.contains('note-fret')) {
-            e.target.style.setProperty('--noteDotOpacity', 0);
+        const target = e.target.closest('.note-fret, .half-left, .half-right');
+        if (!target) return;
+        target.style.setProperty('--noteDotOpacity', 0);
+    });
+
+    // Touch
+    const activeTouches = new Set();
+    fretboard.addEventListener('touchstart', e => {
+        e.preventDefault();
+        for (let touch of e.changedTouches) {
+            const target = document.elementFromPoint(touch.clientX, touch.clientY)
+                .closest('.note-fret, .half-left, .half-right');
+            if (!target || activeTouches.has(target)) continue;
+
+            activeTouches.add(target);
+            playNote(target);
+            target.style.setProperty('--noteDotOpacity', 1);
+        }
+    }, { passive: false });
+
+    fretboard.addEventListener('touchend', e => {
+        for (let touch of e.changedTouches) {
+            const target = document.elementFromPoint(touch.clientX, touch.clientY)
+                .closest('.note-fret, .half-left, .half-right');
+            if (!target) continue;
+
+            target.style.setProperty('--noteDotOpacity', 0);
+            activeTouches.delete(target);
         }
     });
 
 
+    fretboard.addEventListener('touchcancel', e => {
+        for (let touch of e.changedTouches) {
+            const target = document.elementFromPoint(touch.clientX, touch.clientY)
+                .closest('.note-fret, .half-left, .half-right');
+            if (!target) continue;
 
-
-    // Détecte si on est sur mobile
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-
-    // Map pour éviter les répétitions
-    const activeTouches = new Set();
-
-    if (isMobile) {
-        fretboard.addEventListener('touchstart', e => {
-            e.preventDefault(); // empêche le scroll
-
-            const target = e.target.closest('.note-fret, .half-left, .half-right');
-            if (!target || activeTouches.has(target)) return;
-
-            activeTouches.add(target);
-
-            const stringEl = target.closest('.string');
-            const stringIndex = parseInt(stringEl.dataset.stringIndex);
-            const fretIndex = Array.from(stringEl.children).indexOf(target.closest('.note-fret'));
-            const note = target.dataset.note;
-
-            if (note) playNote(target);
-            target.style.setProperty('--noteDotOpacity', 1);
-        });
-
-        fretboard.addEventListener('touchend', e => {
-            const target = e.target.closest('.note-fret, .half-left, .half-right');
-            if (!target) return;
             target.style.setProperty('--noteDotOpacity', 0);
             activeTouches.delete(target);
-        });
+        }
+    });
 
-        fretboard.addEventListener('touchcancel', e => {
-            const target = e.target.closest('.note-fret, .half-left, .half-right');
-            if (!target) return;
-            target.style.setProperty('--noteDotOpacity', 0);
-            activeTouches.delete(target);
-        });
-    }
 
 
 
