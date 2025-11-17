@@ -184,7 +184,7 @@
             if (prevFret) {
                 const prevNote = applyTranspose(prevFret.dataset.note.replace('_k', ''));
                 const prevFreq = noteToFrequency(prevNote);
-                freq = prevFreq + prevFreq * 0.02;
+                freq = prevFreq + prevFreq * 0.026;
             } else {
                 freq = noteToFrequency(applyTranspose(note.replace('_k', '')));
             }
@@ -543,4 +543,5 @@
 
 
 })();
+
 
